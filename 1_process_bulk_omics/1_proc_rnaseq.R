@@ -1,6 +1,7 @@
 # Process Raw RNA-seq counts for web-tool
-# Jessica Ewald
-# April 25, 2023
+# Author: Jessica Ewald
+
+## Set your working directory to the "1_process_bulk_omics" directory
 
 library(dplyr)
 library(ggplot2)
@@ -8,19 +9,28 @@ library(RSQLite)
 library(edgeR)
 library(sva)
 
-# read in 
-fileName <- "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/raw/raw_rnaseq.txt"
-counts <- data.table::fread(fileName, header=TRUE, check.names=FALSE, data.table=FALSE)
+source("../set_paths.R")
+setPaths()
+
+raw.omics.path <- paste0(other.tables.path, "omics_processing_input/raw/")
+proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/")
+
+if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
+
+# read in counts
+fileName <- paste0(raw.omics.path, "raw_rnaseq.txt")
+orig.counts <- data.table::fread(fileName, header=TRUE, check.names=FALSE, data.table=FALSE)
 
 # annotate to Entrez
-myDb <- dbConnect(SQLite(), "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/annotation_libraries/hsa_genes.sqlite")
+myDb <- dbConnect(SQLite(), paste0(other.tables.path, "libraries/hsa_genes.sqlite"))
 ensg <- dbReadTable(myDb, "entrez_embl_gene")
 entrez <- dbReadTable(myDb, "entrez")
 dbDisconnect(myDb)
 
-feature.vec <- counts$V1
+feature.vec <- orig.counts$V1
 hit.inx <- match(feature.vec, ensg[, "accession"])
 gene.ids <- ensg[hit.inx, ]
+counts <- orig.counts
 counts$V1 <- gene.ids$gene_id
 counts <- counts[!is.na(counts$V1), ]
 
@@ -39,8 +49,7 @@ nf <- calcNormFactors(counts, method="RLE")
 lcpm <- cpm(counts, lib.size=colSums(counts)*nf, log = TRUE)
 
 # PCA before batch effect
-batch <- read.table("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/orig/HumanIslets_OxfordStanfordCombined_GeneExp_SampleInfo.txt",
-                    sep = "\t")
+batch <- read.table(paste0(raw.omics.path, "rnaseq_batch_info.txt"), sep="\t")
 colnames(batch) <- c("record_id", "batch")
 
 pr <- prcomp(t(lcpm), scale = TRUE)
@@ -101,16 +110,8 @@ var.thresh <- quantile(lcpm.var, 0.20)
 lcpm.keep <- which(lcpm.var > var.thresh)
 lcpm <- lcpm[lcpm.keep, ]
 
-# # only keep samples with >30% purity
-# mydb <- dbConnect(SQLite(), "/Users/jessicaewald/sqlite/HI_tables.sqlite")
-# iso <- dbReadTable(mydb, "isolation")
-# dbDisconnect(mydb)
-# 
-# high.purity <- iso$record_id[iso$puritypercentage > 30]
-# lcpm <- lcpm[,colnames(lcpm) %in% high.purity]
-
 # write out files
-write.csv(adjusted, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/raw/raw_rnaseq_batch.csv")
-write.csv(lcpm, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/proc/proc_rnaseq.csv")
+write.csv(adjusted, paste0(raw.omics.path, "raw_rnaseq_batch.csv"))
+write.csv(lcpm, paste0(proc.omics.path, "proc_rnaseq.csv"))
 
 
