@@ -1,27 +1,31 @@
-# Compile data into SQLite tables
-# April 26, 2023
-# Jessica Ewald
+# Compile processed omics data into SQLite tables
+# Author: Jessica Ewald
 
-# Store all raw and processed files in SQLite table
+## Set your working directory to the "1_process_bulk_omics" directory
+# All previous omics processing scripts must have been run, or the processed files will not exist for compilation
 
 library(RSQLite)
 
-proc.filepath <- "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/proc/"
-raw.filepath <- "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/raw/"
+source("../set_paths.R")
+setPaths()
 
-proc.names <- c("proc_nanostring_merge.csv", "proc_pbrna_Alpha.csv", "proc_pbrna_Beta.csv", "proc_prot.csv", "proc_rnaseq.csv")
-raw.names <- c("raw_nanostring_C6555.txt", "raw_nanostring_C8898.txt", "raw_prot.csv", "raw_rnaseq.txt", "raw_pbrna_Alpha.csv", "raw_pbrna_Beta.csv")
+proc.filepath <- paste0(other.tables.path, "omics_processing_input/proc/")
+raw.filepath <- paste0(other.tables.path, "omics_processing_input/raw/")
 
-#proc.names <- c("proc_nanostring_merge.csv", "proc_prot.csv", "proc_rnaseq.csv")
-#raw.names <- c("raw_nanostring_C6555.txt", "raw_nanostring_C8898.txt", "raw_prot.csv", "raw_rnaseq.txt")
+proc.names <- c("proc_nanostring_merge.csv", "proc_pbrna_Alpha.csv", 
+                "proc_pbrna_Beta.csv", "proc_prot.csv", "proc_rnaseq.csv")
 
-myDb <- dbConnect(SQLite(), "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/annotation_libraries/hsa_genes.sqlite")
+raw.names <- c("raw_nanostring_C6555.txt", "raw_nanostring_C8898.txt", 
+               "raw_prot.csv", "raw_rnaseq.txt", "raw_pbrna_Alpha.csv", 
+               "raw_pbrna_Beta.csv")
+
+myDb <- dbConnect(SQLite(), paste0(other.tables.path, "libraries/hsa_genes.sqlite"))
 entrez <- dbReadTable(myDb, "entrez")
 dbDisconnect(myDb)
 entrez$name <- gsub('\\"', "", entrez$name)
 
 
-myDb <- dbConnect(SQLite(), "/Users/jessicaewald/sqlite/HI_omics.sqlite")
+myDb <- dbConnect(SQLite(), paste0(sqlite.path, "HI_omics.sqlite"))
 for(i in c(1:length(proc.names))){
   if(grepl("csv", proc.names[i], fixed = TRUE)){
     dat <- read.csv(paste0(proc.filepath, proc.names[i]))
