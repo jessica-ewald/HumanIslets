@@ -14,7 +14,6 @@ setPaths()
 
 raw.omics.path <- paste0(other.tables.path, "omics_processing_input/raw/")
 proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/")
-
 if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
 
 # read in counts

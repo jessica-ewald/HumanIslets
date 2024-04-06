@@ -1,16 +1,21 @@
 # Process Nanostring data for webtool
-# Jessica Ewald
-# April 25, 2023
+# Author: Jessica Ewald
 
-# notes:
-# there are 4 R302 in cs1. I kept the first until I hear back from Dahai.
+## Set your working directory to the "1_process_bulk_omics" directory
 
 library(ggplot2)
 library(dplyr)
 library(sva)
 
+source("../set_paths.R")
+setPaths()
+
+raw.omics.path <- paste0(other.tables.path, "omics_processing_input/raw/")
+proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/")
+if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
+
 # read in two codesets
-cs1 <- read.table("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/raw/raw_nanostring_C6555.txt",
+cs1 <- read.table(paste0(raw.omics.path, "raw_nanostring_C6555.txt"),
                   header = T, sep = "\t")
 cs1 <- cs1[cs1$X != '', ]
 rownames(cs1) <- toupper(cs1$X)
@@ -18,7 +23,7 @@ cs1 <- cs1[,-1]
 cs1 <- as.matrix(cs1)
 mode(cs1) <- "numeric"
 
-cs2 <- read.table("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/raw/raw_nanostring_C8898.txt",
+cs2 <- read.table(paste0(raw.omics.path, "raw_nanostring_C8898.txt"),
                   header = T, sep = "\t")
 cs2 <- cs2[cs2$X != '', ]
 rownames(cs2) <- toupper(cs2$X)
@@ -92,7 +97,8 @@ ggplot(cs.merge.x, aes(x = PC1, y = PC2, color = batch)) +
 # perform batch effect correction of merged data
 batch <- data.frame(batch = cs.merge.x$batch)
 mod.combat <- model.matrix(~1, data = batch)
-cs.combat <- ComBat(dat = na.omit(cs.merge), batch = batch$batch, mod = mod.combat) # ComBat only works if there are values for both batches. Only batch correct merged data and then recombine.
+# ComBat only works if there are values for both batches. Only batch correct merged data and then recombine.
+cs.combat <- ComBat(dat = na.omit(cs.merge), batch = batch$batch, mod = mod.combat) 
 cs.combat <- rbind(cs.combat, cs.merge[!(rownames(cs.merge) %in% rownames(cs.combat)), ])
 
 cs.combat.pr <- prcomp(t(na.omit(cs.combat)), scale = TRUE)
@@ -110,9 +116,9 @@ ggplot(cs.combat.x, aes(x = PC1, y = PC2, color = batch)) +
 
 
 # write out results
-write.csv(cs1, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/proc/proc_nanostring_C6555.csv")
-write.csv(cs2, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/proc/proc_nanostring_C8898.csv")
-write.csv(cs.combat, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/proc/proc_nanostring_merge.csv")
+write.csv(cs1, paste0(proc.omics.path, "proc_nanostring_C6555.csv"))
+write.csv(cs2, paste0(proc.omics.path, "proc_nanostring_C8898.csv"))
+write.csv(cs.combat, paste0(proc.omics.path, "proc_nanostring_merge.csv"))
 
 
 
