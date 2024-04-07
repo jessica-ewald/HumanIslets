@@ -1,13 +1,17 @@
 # Proportion stats for paper
-# Jessica Ewald
-# Dec 21, 2023
+# Author: Jessica Ewald
+
+## Set your working directory to the "6_for_manuscript" directory
 
 library(dplyr)
 library(RSQLite)
 
-proportions <- read.csv("/Users/jessicaewald/Desktop/RestTest/resources/humanislets/processing_input/composition.csv")
+source("../set_paths.R")
+setPaths()
 
-mydb <- dbConnect(SQLite(), "/Users/jessicaewald/sqlite/HI_tables.sqlite")
+proportions <- read.csv(paste0(other.tables.path, "processing_input/composition.csv"))
+
+mydb <- dbConnect(SQLite(), paste0(other.tables.path, "HI_tables.sqlite"))
 meta <- dbReadTable(mydb, "proc_metadata")
 dbDisconnect(mydb)
 
