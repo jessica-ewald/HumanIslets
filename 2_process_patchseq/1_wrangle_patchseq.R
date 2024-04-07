@@ -1,6 +1,7 @@
 # Wrangle patchSeq data
-# Jessica Ewald
-# Dec 4, 2023
+# Author: Jessica Ewald
+
+## Set your working directory to the "2_process_patchseq" directory
 
 library(Seurat)
 library(dplyr)
@@ -8,7 +9,13 @@ library(data.table)
 
 # single-cell filtering thresholds taken from here: https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html
 
-load("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/orig_singlecell/20231128_pclamp_integrated_patched-only_joined.RData")
+source("../set_paths.R")
+setPaths()
+
+proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/patchseq_proc/")
+if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
+
+load(paste0(other.tables.path, "omics_processing_input/raw/20231128_pclamp_integrated_patched-only_joined.RData"))
 
 # extract data
 metadata <- pclamp_patched_all@meta.data
@@ -48,7 +55,6 @@ vars <- c("CellID", "Donor", "celltype", "predicted.celltype.score", "Glucose_mM
 
 patch.meta <- metadata[,vars]
 
-
 # harmonize missing values
 patch.meta[patch.meta == "n/a"] <- NA
 patch.meta[patch.meta == ""] <- NA
@@ -85,8 +91,8 @@ filter.meta <- patch.meta[,c(1:5, 15:19)]
 patch.meta <- patch.meta[,-c(15:19)]
 
 # save as an object
-saveRDS(counts, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/counts.rds")
-saveRDS(patch.meta, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/metadata.rds")
-saveRDS(patch.meta, "/Users/jessicaewald/Desktop/RestTest/resources/humanislets/processing_input/patchseq_metadata.rds") ### this is for merging with the other ephys metadata
-saveRDS(filter.meta, "/Users/jessicaewald/Desktop/RestTest/resources/humanislets/analysis_input/patchseq_donors.rds") ### this is for performing donor filtering
+saveRDS(counts, paste0(proc.omics.path, "counts.rds"))
+saveRDS(patch.meta, paste0(proc.omics.path, "metadata.rds"))
+saveRDS(patch.meta, paste0(other.tables.path, "processing_input/patchseq_metadata.rds")) ### this is for merging with the other ephys metadata
+saveRDS(filter.meta, paste0(other.tables.path, "analysis_input/patchseq_donors.rds")) ### this is for performing donor filtering
 
