@@ -1,21 +1,30 @@
 # Process pseudobulk
-# Jessica Ewald
-# July 25, 2023
+# Author: Jessica Ewald
+
+## Set your working directory to the "2_process_patchseq" directory
 
 library(data.table)
 library(dplyr)
 library(edgeR)
 library(ggplot2)
 library(RSQLite)
+library(rhdf5)
+library(HDF5Array)
+
+source("../set_paths.R")
+setPaths()
+
+proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/patchseq_proc/")
+if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
 
 # annotate to Entrez
-myDb <- dbConnect(SQLite(), "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/annotation_libraries/hsa_genes.sqlite")
+myDb <- dbConnect(SQLite(), paste0(other.tables.path, "libraries/hsa_genes.sqlite"))
 entrez <- dbReadTable(myDb, "entrez")
 ensembl <- dbReadTable(myDb, "entrez_embl_gene")
 dbDisconnect(myDb)
 
-expr <- readRDS("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/counts.rds")
-meta <- readRDS("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/metadata.rds")
+expr <- readRDS(paste0(proc.omics.path, "counts.rds"))
+meta <- readRDS(paste0(proc.omics.path, "metadata.rds"))
 
 ensG <- rownames(expr)
 
@@ -66,27 +75,21 @@ for(i in c(1:length(types))){
 }
 
 names(sc.lcpm) <- sc.names
-saveRDS(sc.lcpm, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/sc_lcpm.rds")
+saveRDS(sc.lcpm, paste0(proc.omics.path, "sc_lcpm.rds"))
 
 ## Write out data to HDF5
-lcpm <- readRDS("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/sc_lcpm.rds")
-sc.names <- names(lcpm)
-
-library(RSQLite)
-library(rhdf5)
-library(HDF5Array)
 
 # annotate to Entrez
-myDb <- dbConnect(SQLite(), "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/annotation_libraries/hsa_genes.sqlite")
+myDb <- dbConnect(SQLite(), paste0(other.tables.path, "libraries/hsa_genes.sqlite"))
 entrez <- dbReadTable(myDb, "entrez")
 dbDisconnect(myDb)
-meta <- readRDS("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/metadata.rds")
+meta <- readRDS(paste0(proc.omics.path, "metadata.rds"))
 
 # add single-cell gene expression tables to hdf5 files
 # build metadata of interest directly into here (?)
 for(i in c(1:length(sc.names))){
   type <- sc.names[i]
-  temp <- lcpm[[type]]
+  temp <- sc.lcpm[[type]]
   
   # get gene info
   feature.vec <- rownames(temp)

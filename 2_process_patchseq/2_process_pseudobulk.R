@@ -1,6 +1,7 @@
 # Process pseudobulk
-# Jessica Ewald
-# July 25, 2023
+# Author: Jessica Ewald
+
+## Set your working directory to the "2_process_patchseq" directory
 
 library(data.table)
 library(dplyr)
@@ -8,9 +9,16 @@ library(edgeR)
 library(ggplot2)
 library(RSQLite)
 
+source("../set_paths.R")
+setPaths()
+
+raw.omics.path <- paste0(other.tables.path, "omics_processing_input/raw/")
+proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/patchseq_proc/")
+if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
+
 # read in data
-counts <- readRDS("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/counts.rds")
-meta <- readRDS("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/metadata.rds")
+counts <- readRDS(paste0(proc.omics.path, "counts.rds"))
+meta <- readRDS(paste0(proc.omics.path, "metadata.rds"))
 
 # require cell score to be >0.8
 identical(meta$cell_id, colnames(counts))
@@ -58,16 +66,14 @@ for(i in c(1:length(types))){
     pb.counts[[i]] <- counts.temp
 }
 names(pb.counts) <- types
-saveRDS(pb.counts, "/Users/jessicaewald/Desktop/pb_counts_backup.rds")
-pb.counts <- readRDS("/Users/jessicaewald/Desktop/pb_counts_backup.rds")
 
 # write out 'raw' files to omics folder
-write.csv(pb.counts$Alpha, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/raw/raw_pbrna_Alpha.csv")
-write.csv(pb.counts$Beta, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/raw/raw_pbrna_Beta.csv")
+write.csv(pb.counts$Alpha, paste0(raw.omics.path, "raw_pbrna_Alpha.csv"))
+write.csv(pb.counts$Beta, paste0(raw.omics.path, "raw_pbrna_Beta.csv"))
 
 ## convert pseudobulk data to lcpm
 # annotate to Entrez
-myDb <- dbConnect(SQLite(), "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/annotation_libraries/hsa_genes.sqlite")
+myDb <- dbConnect(SQLite(), paste0(other.tables.path, "libraries/hsa_genes.sqlite"))
 entrez <- dbReadTable(myDb, "entrez")
 ens <- dbReadTable(myDb, "entrez_embl_gene")
 dbDisconnect(myDb)
@@ -99,7 +105,8 @@ for(i in c(1:length(types))){
   temp <- temp[,-1]
   
   # filter by abundance
-  genes.keep <- apply(temp, 1, function(x){sum(x == 0)/length(x) < 0.8}) # can have maximum 80% zeros
+  # can have maximum 80% zeros
+  genes.keep <- apply(temp, 1, function(x){sum(x == 0)/length(x) < 0.8})
   temp <- temp[genes.keep, ]
   
   # convert to lcpm
@@ -111,13 +118,7 @@ for(i in c(1:length(types))){
   lcpm.temp[lcpm.temp == min(lcpm.temp, na.rm = TRUE)] <- NA
   
   pb.lcpm[[i]] <- lcpm.temp
-  
-  # write out to CSV
-  lcpm.temp <- as.data.frame(lcpm.temp)
-  
-  write.csv(lcpm.temp, paste0("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/proc/proc_pbrna_", types[i], ".csv"))
 }
 names(pb.lcpm) <- types
 
-saveRDS(pb.counts, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/pb_counts.rds")
-saveRDS(pb.lcpm, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/patchSeq_proc/pb_lcpm.rds")
+saveRDS(pb.lcpm, paste0(proc.omics.path, "pb_lcpm.rds"))
