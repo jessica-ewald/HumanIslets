@@ -1,6 +1,7 @@
 # Deconvolution version 2
-# Jessica Ewald
-# Nov 30, 2023
+# Author: Jessica Ewald
+
+## Set your working directory to the "4_deconvolution_analysis" directory
 
 library(dplyr)
 library(stringr)
@@ -9,12 +10,17 @@ library(ggplot2)
 library(pheatmap)
 library(ggpubr)
 
+source("../set_paths.R")
+setPaths()
+
+raw.omics.path <- paste0(other.tables.path, "omics_processing_input/raw/")
+
 # read in proteomics data
-prot <- read.csv("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Omics_data/raw/raw_prot.csv",
+prot <- read.csv(paste0(raw.omics.path, "raw_prot.csv"),
                  header = TRUE, row.names = 1)
 
 # process uniprot annotation data
-uniprot.dat <- read.table("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Rscripts/deconvolution/proteomics/uniprot_id_mass.tsv",
+uniprot.dat <- read.table("./input_data/uniprot_id_mass.tsv",
                           header = TRUE, sep = "\t", fill = TRUE, quote="")
 IDs <- str_split(uniprot.dat$Gene.Names, " ")
 names(IDs) <- uniprot.dat$Entry
@@ -35,7 +41,7 @@ proD.mean <- 0.10
 proG.mean <- 0.05
 
 # Read in and process marker genes
-markers <- readRDS("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Rscripts/deconvolution/proteomics/markers_herrera.rds")
+markers <- readRDS("./input_data/markers_herrera.rds")
 
 # get marker genes
 bcm.dat <- prot[rownames(prot) %in% markers$uniprot[markers$cell_type == "beta"], ]
@@ -114,95 +120,8 @@ cell.pro$alpha_end <- cell.pro$alpha/cell.pro$end_total
 cell.pro$delta_end <- cell.pro$delta/cell.pro$end_total
 cell.pro$gamma_end <- cell.pro$gamma/cell.pro$end_total
 
-saveRDS(cell.pro, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Rscripts/deconvolution/proteomics/v3_results/proportions.rds")
+# Write out results
 write.csv(cell.pro[,c("record_id", "beta_end", "alpha_end", "delta_end", "gamma_end", "exo_per")],
-          "/Users/jessicaewald/Desktop/RestTest/resources/humanislets/processing_input/composition.csv",
+          paste0(other.tables.path, "processing_input/composition.csv"),
           row.names = FALSE)
-
-########## ANALYZE CELL TYPE PROPORTIONS ###########
-
-library(GGally)
-ggpairs(cell.pro[,c(9:13)], aes(alpha = 0.4)) + theme_bw() 
-ggpairs(cell.pro[,c(14:17)], aes(alpha = 0.4)) + theme_bw() 
-
-# plot proportions
-stacked.bar <- cell.pro[,c(1:5,7)]
-
-stacked.bar <- reshape2::melt(stacked.bar)
-colnames(stacked.bar) <- c("record_id", "cell_type", "proportion")
-stacked.bar$cell_type <- as.character(stacked.bar$cell_type)
-stacked.bar$cell_type[stacked.bar$cell_type == "exo_total"] <- "non.endocrine"
-stacked.bar$record_id <- factor(stacked.bar$record_id, levels = cell.pro$record_id[order(cell.pro$exo_total, cell.pro$beta)])
-
-ggplot(stacked.bar, aes(fill=cell_type, y=proportion, x=record_id)) + 
-  geom_bar(position='stack', stat='identity', width=1) +
-  scale_fill_brewer(palette = "Set3") +
-  theme_minimal() +
-  theme(axis.text.y = element_text(size = 6, margin = margin(r = -15)),
-        panel.grid.major.y = element_blank()) +
-  coord_flip()
-
-# correlation structure between different cell type measures
-cormat <- cor(cell.pro[,-1])
-cormat[lower.tri(cormat)] <- NA
-cormat <- round(cormat, 2) %>% reshape2::melt(., na.rm = TRUE)
-
-
-# Plot proportions
-# Like Fig3A in this paper: https://www.nature.com/articles/s41598-017-16300-w 
-
-prop <- cell.pro[,c("record_id", "beta_end", "alpha_end", "delta_end", "gamma_end")]
-prop <- prop[order(prop$beta_end, decreasing = TRUE), ]
-prop$record_id <- factor(prop$record_id, levels = prop$record_id)
-prop <- reshape2::melt(prop)
-colnames(prop) <- c("record_id", "Cell_Type", "Proportion")
-
-ggplot(prop, aes(x = record_id, y = Proportion, color = Cell_Type, group = Cell_Type)) +
-  geom_line() +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6))
-
-# measured proportions
-meas <- read.csv("/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Rscripts/deconvolution/cell_proportions_HIPP.csv")
-colnames(meas) <- c("record_id", "beta.m", "alpha.m", "delta.m", "exo.m", "endo.m")
-
-prop <- cell.pro[,c("record_id", "alpha", "beta", "delta")]
-prop$alpha <- prop$alph
-prop$beta <- prop$beta
-prop$delta <- prop$delta
-
-prop$m.total <- apply(prop[,2:4], 1, sum)
-prop$beta.md <- prop$beta/prop$m.total*100
-prop$alpha.md <- prop$alpha/prop$m.total*100
-prop$delta.md <- prop$delta/prop$m.total*100
-
-compare <- merge(prop[,c("record_id", "beta.md", "alpha.md", "delta.md")], meas, by = "record_id")
-
-# there is a correlation and all p-values are significant
-# could it agree better if a surface area / volume correction were applied?
-# proportion volume/mass, proportion cell number, proportion stained pixels (sort of surface area??)
-# given systematically different cell sizes & shapes between types, these would all give different 
-# numbers
-
-p <- ggplot(compare, aes(x = beta.m, y = beta.md)) +
-  geom_point() +
-  theme_bw()
-p + geom_abline(intercept = 0, slope = 1)
-
-cor.test(compare$beta.m, compare$beta.md)
-
-p <- ggplot(compare, aes(x = alpha.m, y = alpha.md)) +
-  geom_point() +
-  theme_bw()
-p + geom_abline(intercept = 0, slope = 1)
-cor.test(compare$alpha.m, compare$alpha.md)
-
-p <- ggplot(compare, aes(x = delta.m, y = delta.md)) +
-  geom_point() +
-  theme_bw()
-p + geom_abline(intercept = 0, slope = 1)
-cor.test(compare$delta.m, compare$delta.md)
-
-
-
 

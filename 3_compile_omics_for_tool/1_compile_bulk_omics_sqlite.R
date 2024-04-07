@@ -1,7 +1,7 @@
 # Compile processed omics data into SQLite tables
 # Author: Jessica Ewald
 
-## Set your working directory to the "1_process_bulk_omics" directory
+## Set your working directory to the "3_compile_omics_for_tool" directory
 # All previous omics processing scripts must have been run, or the processed files will not exist for compilation
 
 library(RSQLite)
