@@ -18,6 +18,7 @@ setPaths <- function(){
     sqlite.path <<- "/Users/jessicaewald/sqlite/"; # ewald local
     h5.path <<- "/Users/jessicaewald/hdf5/"
     other.tables.path <<- "/Users/jessicaewald/Desktop/RestTest/resources/humanislets/"
+    restapi.path <<- "/Users/jessicaewald/NetbeansProjects/restxialab/"
   } else {
     print("Please set your local paths for this computer!")
   }

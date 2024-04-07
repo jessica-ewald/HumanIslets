@@ -1,19 +1,25 @@
 # Omics ~ Outcomes for Feature Search Page
-# Oct 26, 2023
-# Jessica Ewald
+# Author: Jessica Ewald
 
+## Set your working directory to the "5_precompute_associations" directory
 
-source("/Users/jessicaewald/NetbeansProjects/omicsquareapi/src/main/webapp/resources/rscripts/humanislets_statistics.R")
-source("/Users/jessicaewald/NetbeansProjects/omicsquareapi/src/main/webapp/resources/rscripts/filepath_utils.R")
 library(RSQLite)
 library(dplyr)
 library(data.table)
 library(stringr)
 
+source("../set_paths.R")
 setPaths()
 
+raw.omics.path <- paste0(other.tables.path, "omics_processing_input/raw/")
+proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/")
+
+# use same functions as used by web-tool
+source(paste0(restapi.path, "src/main/webapp/resources/rscripts/humanislets_statistics.R"))
+source(paste0(restapi.path, "src/main/webapp/resources/rscripts/filepath_utils.R"))
+
 # read in covariates
-mydb <- dbConnect(SQLite(), "/Users/jessicaewald/sqlite/HI_tables.sqlite")
+mydb <- dbConnect(SQLite(), paste0(sqlite.path, "HI_tables.sqlite"))
 meta <- dbReadTable(mydb, "proc_metadata")
 meta.info <- dbReadTable(mydb, "proc_variable_summary")
 dbDisconnect(mydb)
@@ -26,7 +32,7 @@ meta.ephys.donor <- meta.info[meta.info$group_id == "ephys_donor", ]
 meta.ephys.cell <- meta.info[meta.info$group_id == "ephys_cell", ]
 
 # Will need to consider discrete metadata differently - must specify contrasts. 
-# For some, it makes more sense to do ANOVA because there is no obvious contrast. Maybe do ANOVA and just put "--" for the FC?
+# For some, it makes more sense to do ANOVA because there is no obvious contrast.
 
 # donorsex: F v M
 # diagnosis: T2D v ND, T1D v ND
@@ -64,7 +70,6 @@ for(i in c(1:length(omics))){
 }
 
 dea.results$contrast <- NA
-saveRDS(dea.results, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Rscripts/feature_search_analysis/Results/continuous_metadata.rds")
 
 
 ## Discrete metadata with obvious contrast choices 
@@ -97,8 +102,6 @@ for(i in c(1:length(omics))){
 
   }
 }
-
-saveRDS(disc.contrast.results, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Rscripts/feature_search_analysis/Results/discrete_metadata_contrast.rds")
 
 
 
@@ -139,7 +142,6 @@ for(i in c(1:length(omics))){
 }
 disc.anova.results$Coefficient <- NA
 disc.anova.results$sig[disc.anova.results$sig == "up"] <- "sig"
-saveRDS(disc.anova.results, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Rscripts/feature_search_analysis/Results/discrete_metadata_anova.rds")
 
 
 # Ephys (donor-level) continuous outcomes
@@ -174,7 +176,6 @@ for(i in c(1:length(omics))){
 }
 
 ephys.donor.results$contrast <- NA
-saveRDS(ephys.donor.results, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Rscripts/feature_search_analysis/Results/ephys_donor_metadata.rds")
 
 
 # Ephys outcomes - single cell
@@ -204,7 +205,6 @@ ephys.cell.results$contrast <- NA
 ephys.cell.results$T_statistic <- NA
 ephys.cell.results$Associated.proportions <- NA
 ephys.cell.results <- ephys.cell.results[,c(1:3, 14, 4:5, 15, 6:13)]
-saveRDS(ephys.cell.results, "/Users/jessicaewald/Library/CloudStorage/OneDrive-McGillUniversity/XiaLab/Tools/HumanIslets/Rscripts/feature_search_analysis/Results/ephys_cell_metadata.rds")
 
 
 ### Combine everything
@@ -285,7 +285,7 @@ inds.remove <- intersect(inds1, inds2)
 all.results <- all.results[-c(inds.remove), ]
 
 ### Save in SQLite
-mydb <- dbConnect(SQLite(), "/Users/jessicaewald/sqlite/HI_precomputed.sqlite")
+mydb <- dbConnect(SQLite(), paste0(sqlite.path, "HI_precomputed.sqlite"))
 dbWriteTable(mydb, "omics_outcomes", all.results, overwrite = TRUE)
 dbExecute(mydb, "CREATE INDEX IF NOT EXISTS ix_entrez ON omics_outcomes(Gene_ID)")
 dbExecute(mydb, "CREATE INDEX IF NOT EXISTS ix_meta ON omics_outcomes(Metadata_ID)")

@@ -1,13 +1,17 @@
 # create tool files for feature search
-# Jessica Ewald
-# November 8, 2023
+# Author: Jessica Ewald
+
+## Set your working directory to the "5_precompute_associations" directory
 
 library(RSQLite)
 library(dplyr)
 
-proc.summary <- read.csv("/Users/jessicaewald/Desktop/RestTest/resources/humanislets/proc_variable_summary.csv")
+source("../set_paths.R")
+setPaths()
 
-mydb <- dbConnect(SQLite(), "/Users/jessicaewald/sqlite/HI_precomputed.sqlite")
+proc.summary <- read.csv(paste0(other.tables.path, "proc_variable_summary.csv"))
+
+mydb <- dbConnect(SQLite(), paste0(sqlite.path, "HI_precomputed.sqlite"))
 dbListTables(mydb)
 omics_outcomes <- dbReadTable(mydb, "omics_outcomes")
 dbDisconnect(mydb)
@@ -72,4 +76,4 @@ all.names <- rbind(all.names, ephys.outcome.names)
 all.names <- rbind(all.names, gene.entries)
 
 # write out results
-write.csv(all.names, "/Users/jessicaewald/Desktop/RestTest/resources/humanislets/feature_search_names.csv", row.names = FALSE)
+write.csv(all.names, paste0(other.tables.path, "display_interface/feature_search_names.csv"), row.names = FALSE)
