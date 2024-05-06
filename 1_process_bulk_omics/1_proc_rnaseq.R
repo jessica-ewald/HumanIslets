@@ -12,12 +12,12 @@ library(sva)
 source("../set_paths.R")
 setPaths()
 
-raw.omics.path <- paste0(other.tables.path, "omics_processing_input/raw/")
+raw.omics.path <- paste0(other.tables.path, "omics_processing_input/unproc/")
 proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/")
 if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
 
 # read in counts
-fileName <- paste0(raw.omics.path, "raw_rnaseq.txt")
+fileName <- paste0(raw.omics.path, "unproc_rnaseq.txt")
 orig.counts <- data.table::fread(fileName, header=TRUE, check.names=FALSE, data.table=FALSE)
 
 # annotate to Entrez
@@ -110,7 +110,7 @@ lcpm.keep <- which(lcpm.var > var.thresh)
 lcpm <- lcpm[lcpm.keep, ]
 
 # write out files
-write.csv(adjusted, paste0(raw.omics.path, "raw_rnaseq_batch.csv"))
+write.csv(adjusted, paste0(raw.omics.path, "unproc_rnaseq_batch.csv"))
 write.csv(lcpm, paste0(proc.omics.path, "proc_rnaseq.csv"))
 
 

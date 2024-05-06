@@ -12,7 +12,7 @@ library(RSQLite)
 source("../set_paths.R")
 setPaths()
 
-raw.omics.path <- paste0(other.tables.path, "omics_processing_input/raw/")
+raw.omics.path <- paste0(other.tables.path, "omics_processing_input/unproc/")
 proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/patchseq_proc/")
 if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
 
@@ -68,8 +68,8 @@ for(i in c(1:length(types))){
 names(pb.counts) <- types
 
 # write out 'raw' files to omics folder
-write.csv(pb.counts$Alpha, paste0(raw.omics.path, "raw_pbrna_Alpha.csv"))
-write.csv(pb.counts$Beta, paste0(raw.omics.path, "raw_pbrna_Beta.csv"))
+write.csv(pb.counts$Alpha, paste0(raw.omics.path, "unproc_pbrna_Alpha.csv"))
+write.csv(pb.counts$Beta, paste0(raw.omics.path, "unproc_pbrna_Beta.csv"))
 
 ## convert pseudobulk data to lcpm
 # annotate to Entrez

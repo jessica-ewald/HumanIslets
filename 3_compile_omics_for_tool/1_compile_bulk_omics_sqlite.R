@@ -10,14 +10,14 @@ source("../set_paths.R")
 setPaths()
 
 proc.filepath <- paste0(other.tables.path, "omics_processing_input/proc/")
-raw.filepath <- paste0(other.tables.path, "omics_processing_input/raw/")
+raw.filepath <- paste0(other.tables.path, "omics_processing_input/unproc/")
 
 proc.names <- c("proc_nanostring_merge.csv", "proc_pbrna_Alpha.csv", 
                 "proc_pbrna_Beta.csv", "proc_prot.csv", "proc_rnaseq.csv")
 
-raw.names <- c("raw_nanostring_C6555.txt", "raw_nanostring_C8898.txt", 
-               "raw_prot.csv", "raw_rnaseq.txt", "raw_pbrna_Alpha.csv", 
-               "raw_pbrna_Beta.csv")
+raw.names <- c("unproc_nanostring_C6555.txt", "unproc_nanostring_C8898.txt", 
+               "unproc_prot.csv", "unproc_rnaseq.txt", "unproc_pbrna_Alpha.csv", 
+               "unproc_pbrna_Beta.csv")
 
 myDb <- dbConnect(SQLite(), paste0(other.tables.path, "libraries/hsa_genes.sqlite"))
 entrez <- dbReadTable(myDb, "entrez")

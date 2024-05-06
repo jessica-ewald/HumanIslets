@@ -10,12 +10,12 @@ library(sva)
 source("../set_paths.R")
 setPaths()
 
-raw.omics.path <- paste0(other.tables.path, "omics_processing_input/raw/")
+raw.omics.path <- paste0(other.tables.path, "omics_processing_input/unproc/")
 proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/")
 if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
 
 # read in two codesets
-cs1 <- read.table(paste0(raw.omics.path, "raw_nanostring_C6555.txt"),
+cs1 <- read.table(paste0(raw.omics.path, "unproc_nanostring_C6555.txt"),
                   header = T, sep = "\t")
 cs1 <- cs1[cs1$X != '', ]
 rownames(cs1) <- toupper(cs1$X)
@@ -23,7 +23,7 @@ cs1 <- cs1[,-1]
 cs1 <- as.matrix(cs1)
 mode(cs1) <- "numeric"
 
-cs2 <- read.table(paste0(raw.omics.path, "raw_nanostring_C8898.txt"),
+cs2 <- read.table(paste0(raw.omics.path, "unproc_nanostring_C8898.txt"),
                   header = T, sep = "\t")
 cs2 <- cs2[cs2$X != '', ]
 rownames(cs2) <- toupper(cs2$X)

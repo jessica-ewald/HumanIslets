@@ -12,7 +12,7 @@ library(RSQLite)
 source("../set_paths.R")
 setPaths()
 
-raw.omics.path <- paste0(other.tables.path, "omics_processing_input/raw/")
+raw.omics.path <- paste0(other.tables.path, "omics_processing_input/unproc/")
 proc.omics.path <- paste0(other.tables.path, "omics_processing_input/proc/")
 
 if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
@@ -22,7 +22,7 @@ if(!dir.exists(proc.omics.path)){ dir.create(proc.omics.path) }
 # imp4p RF just a wrapper for 'MissForest' package: https://academic.oup.com/bioinformatics/article/28/1/112/219101
 
 # get proteomics data
-prot <- read.csv(paste0(raw.omics.path, "raw_prot.csv"))
+prot <- read.csv(paste0(raw.omics.path, "unproc_prot.csv"))
 prot.ids <- prot$X
 rownames(prot) <- prot$X
 prot <- prot[,-1]
