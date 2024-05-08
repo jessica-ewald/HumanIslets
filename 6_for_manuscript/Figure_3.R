@@ -11,15 +11,34 @@ source("../set_paths.R")
 source("/Users/jessicaewald/NetbeansProjects/restxialab/src/main/webapp/resources/rscripts/humanislets_statistics.R")
 setPaths()
 
-
-###### Figure 2A #######
-# This figure shows the distribution of the main metadata across all donors
-
 # get data
 mydb <- dbConnect(RSQLite::SQLite(), paste0(sqlite.path, "HI_tables.sqlite"))
 donor <- dbReadTable(mydb, "donor")
 isolation <- dbReadTable(mydb, "isolation")
 dbDisconnect(mydb)
+
+
+###### Culture time #######
+# culture time
+pdf(file="./figures/fig3A.pdf", width=6, height=4)
+ggplot(donor, aes(x = predistributionculturetime)) +
+  geom_histogram() +
+  theme_classic() +
+  xlab("Culture time (h)") +
+  ylab("Count")
+dev.off()
+
+# % purity
+pdf(file="./figures/fig3B.pdf", width=6, height=4)
+ggplot(isolation, aes(x = puritypercentage)) +
+  geom_histogram() +
+  theme_classic() +
+  xlab("Islet purity (%)") +
+  ylab("Count")
+dev.off()
+
+###### Figure 2A #######
+# This figure shows the distribution of the main metadata across all donors
 
 mydb <- dbConnect(RSQLite::SQLite(), paste0(sqlite.path, "HI_omics.sqlite"))
 rnaseq <- dbReadTable(mydb, "proc_rnaseq")
@@ -92,8 +111,8 @@ dea_res <- merge(dea_res, res_nonendo, by = "Gene_ID", all = TRUE)
 dea_res$Sig_None_CT <- NA
 dea_res$Sig_None_CT[dea_res$None_Adjusted.p_value < 0.05 & dea_res$CT_Adjusted.p_value < 0.05] <- "Both"
 dea_res$Sig_None_CT[dea_res$None_Adjusted.p_value > 0.05 & dea_res$CT_Adjusted.p_value > 0.05] <- "Neither"
-dea_res$Sig_None_CT[dea_res$None_Adjusted.p_value < 0.05 & dea_res$CT_Adjusted.p_value > 0.05] <- "Without covariates"
-dea_res$Sig_None_CT[dea_res$None_Adjusted.p_value > 0.05 & dea_res$CT_Adjusted.p_value < 0.05] <- "With culture time"
+dea_res$Sig_None_CT[dea_res$None_Adjusted.p_value < 0.05 & dea_res$CT_Adjusted.p_value > 0.05] <- "Without covariate"
+dea_res$Sig_None_CT[dea_res$None_Adjusted.p_value > 0.05 & dea_res$CT_Adjusted.p_value < 0.05] <- "With covariate"
 
 dea_res$Sig_None_Purity <- NA
 dea_res$Sig_None_Purity[dea_res$None_Adjusted.p_value < 0.05 & dea_res$Purity_Adjusted.p_value < 0.05] <- "Both"
@@ -108,7 +127,7 @@ dea_res$Sig_None_Nonendo[dea_res$None_Adjusted.p_value < 0.05 & dea_res$Nonendo_
 dea_res$Sig_None_Nonendo[dea_res$None_Adjusted.p_value > 0.05 & dea_res$Nonendo_Adjusted.p_value < 0.05] <- "With % purity"
 
 # Plot results
-pdf(file="./figures/fig3_legend.pdf", width=5, height=5)
+pdf(file="./figures/fig3F_legend.pdf", width=5, height=5)
 ggplot(dea_res, aes(x = None_negLogPval, y = CT_negLogPval, color = Sig_None_CT)) +
   geom_point() +
   geom_abline(slope = 1, intercept = 0, color = "black", lwd = 1) +
@@ -118,7 +137,7 @@ ggplot(dea_res, aes(x = None_negLogPval, y = CT_negLogPval, color = Sig_None_CT)
   ylab("-log10(p-value): adjusting for culture time")
 dev.off()
 
-pdf(file="./figures/fig3A.pdf", width=5, height=5)
+pdf(file="./figures/fig3F.pdf", width=5, height=5)
 ggplot(dea_res, aes(x = None_negLogPval, y = CT_negLogPval, color = Sig_None_CT)) +
   geom_point() +
   geom_abline(slope = 1, intercept = 0, color = "black", lwd = 1) +
@@ -129,7 +148,6 @@ ggplot(dea_res, aes(x = None_negLogPval, y = CT_negLogPval, color = Sig_None_CT)
   theme(legend.position = "None")
 dev.off()
 
-pdf(file="./figures/fig3B.pdf", width=5, height=5)
 ggplot(dea_res, aes(x = None_negLogPval, y = Purity_negLogPval, color = Sig_None_Purity)) +
   geom_point() +
   geom_abline(slope = 1, intercept = 0, color = "black", lwd = 1) +
@@ -138,13 +156,16 @@ ggplot(dea_res, aes(x = None_negLogPval, y = Purity_negLogPval, color = Sig_None
   xlab("-log10(p-value): no covariate adjustment") +
   ylab("-log10(p-value): adjusting for % purity") +
   theme(legend.position = "None")
-dev.off()
 
+
+pdf(file="./figures/fig3G.pdf", width=5, height=5)
 ggplot(dea_res, aes(x = None_negLogPval, y = Nonendo_negLogPval, color = Sig_None_Nonendo)) +
   geom_point() +
   geom_abline(slope = 1, intercept = 0, color = "black", lwd = 1) +
   theme_bw() +
   scale_color_manual(values = c("#636363", "#cccccc", "red", "blue")) + 
   xlab("-log10(p-value): no covariate adjustment") +
-  ylab("-log10(p-value): adjusting for % non-endocrine")
+  ylab("-log10(p-value): adjusting for % non-endocrine") +
+  theme(legend.position = "None")
+dev.off()
   

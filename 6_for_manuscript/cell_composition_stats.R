@@ -19,6 +19,8 @@ mydb <- dbConnect(SQLite(), paste0(sqlite.path, "HI_tables.sqlite"))
 meta <- dbReadTable(mydb, "proc_metadata")
 dbDisconnect(mydb)
 
+#### Calculate correlation between purity and trapped
+cor.test(meta$puritypercentage, meta$trappedpercentage, use = "complete")
 
 #### Calculate correlation between percent exocrine and percent purity
 cor.test(meta$puritypercentage, meta$exo_per, use = "complete")

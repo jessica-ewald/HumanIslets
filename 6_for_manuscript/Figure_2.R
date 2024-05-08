@@ -6,6 +6,7 @@
 library(dplyr)
 library(RSQLite)
 library(pheatmap)
+library(ggplot2)
 
 source("../set_paths.R")
 setPaths()
@@ -19,13 +20,18 @@ mydb <- dbConnect(RSQLite::SQLite(), paste0(sqlite.path, "HI_tables.sqlite"))
 donor <- dbReadTable(mydb, "donor")
 dbDisconnect(mydb)
 
+donor$diagnosis_computed[donor$diagnosis_computed == "Type1"] <- "Type 1"
+donor$diagnosis_computed[donor$diagnosis_computed == "Type2"] <- "Type 2"
+donor$diagnosis_computed[donor$diagnosis_computed == "Pre.T2D"] <- "Pre-diabetes"
+
 # sex
-pdf(file="./figures/fig2A.pdf", width=4, height=4)
+pdf(file="./figures/fig2A.pdf", width=3, height=3.8)
 ggplot(donor, aes(x = donorsex)) +
   geom_bar(stat="count") +
   theme_classic() +
   xlab("Sex") +
-  ylab("Count")
+  ylab("Count") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.75, hjust=1))
 dev.off()
 
 # age
@@ -38,16 +44,17 @@ ggplot(donor, aes(x = donorage)) +
 dev.off()
 
 # diagnosis
-pdf(file="./figures/fig2D.pdf", width=4, height=4)
-ggplot(donor, aes(x = diagnosis)) +
+pdf(file="./figures/fig2C.pdf", width=5.5, height=4)
+ggplot(donor, aes(x = diagnosis_computed)) +
   geom_bar(stat="count") +
   theme_classic() +
   xlab("Diabetes diagnosis") +
-  ylab("Count")
+  ylab("Count") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 dev.off()
 
 # hba1c
-pdf(file="./figures/fig2E.pdf", width=4, height=4)
+pdf(file="./figures/fig2D.pdf", width=4, height=4)
 ggplot(donor, aes(x = hba1c)) +
   geom_histogram() +
   theme_classic() +
@@ -107,7 +114,7 @@ disp.colnames <- c("Clinical metadata", "Technical metadata", "Static insulin se
 
 pheatmap(avail_df, legend = FALSE, show_rownames = FALSE, cluster_cols = FALSE, cluster_rows = FALSE,
          color = c("white", "#43A047"), angle_col=90, labels_col = disp.colnames, border_color = NA,
-         filename="./figures/fig2C.pdf", width=4.5, height=9)
+         filename="./figures/fig2E.pdf", width=4.5, height=9)
 
 
 
